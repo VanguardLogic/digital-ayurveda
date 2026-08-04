@@ -12,7 +12,7 @@ This project was built for our **1st Hackathon at NSUT** by:
 - **Kuber Bassi** ([@kuberbassi](https://github.com/kuberbassi))
 - **Smarth Sharma** ([@smarthsharma07](https://github.com/smarthsharma07))
 
-Hosted under our joint organization **VanguardLogic** ([@VanguardLogic](https://github.com/VanguardLogic)).
+Hosted under our organization **VanguardLogic** ([@VanguardLogic](https://github.com/VanguardLogic)).
 
 ---
 
