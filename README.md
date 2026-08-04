@@ -2,50 +2,38 @@
 
 > Ancient Wisdom, Modern Well-being.
 
-A modern, lightweight web application for tracking your daily aura, mood, sleep, and wellness using Ayurvedic principles.
+A modern, standalone web application for tracking daily aura, mood, sleep, and wellness using Ayurvedic principles.
 
 ---
 
-## 🌿 Features
+## 🌿 About the Project
 
-- **My Aura Dashboard**: Track daily mood, sleep hours, water intake, exercise, and screen time with automatic score calculations and visual trend charts.
-- **Soma Zone**: Explore lunar energy practices, AI-powered daily wellness suggestions, and interactive 4-7-8 Pranayama breathwork.
-- **Standalone Architecture**: Zero database setup required — logs and trends are persisted locally in browser storage for instant performance.
+This project was built for our **1st Hackathon at NSUT** by:
+- **Kuber Bassi** ([@kuberbassi](https://github.com/kuberbassi))
+- **Smarth Sharma** ([@smarthsharma07](https://github.com/smarthsharma07))
+
+Hosted under our joint organization **VanguardLogic** ([@VanguardLogic](https://github.com/VanguardLogic)).
+
+---
+
+## ✨ Features
+
+- **My Aura Dashboard**: Track mood, sleep, water, and activity with real-time score calculations and Chart.js trends.
+- **Soma Zone**: Explore lunar energy practices, AI daily suggestions, and interactive 4-7-8 Pranayama breathwork.
+- **Standalone Architecture**: Zero database latency — data persists locally in browser storage for instant performance.
 
 ---
 
 ## 🚀 Quickstart
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/kuberbassi/shlok.git
-   cd shlok
-   ```
-
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   # On Windows:
-   .\venv\Scripts\Activate.ps1
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the app:**
-   ```bash
-   python app.py
-   ```
-
-5. Open `http://localhost:5000` in your web browser.
+```bash
+git clone https://github.com/VanguardLogic/digital-ayurveda.git
+cd digital-ayurveda
+python app.py
+```
+Open `http://localhost:5000` in your web browser.
 
 ---
 
-## 🛠 Tech Stack
-
-- **Backend:** Python / Flask
-- **Frontend:** Modern HTML5, Vanilla CSS3 (Glassmorphism & Custom Design System), JavaScript (ES6+), Chart.js
+## 🌐 Live Demo
+Published on GitHub Pages: [VanguardLogic/digital-ayurveda](https://vanguardlogic.github.io/digital-ayurveda/)
