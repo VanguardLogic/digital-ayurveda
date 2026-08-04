@@ -1,293 +1,318 @@
-// This file is in: /static/js/script.js
+/* ═══════════════════════════════════════════════════════════════
+   Digital Ayurveda — Interactive Engine & Immersive Parallax
+   ═══════════════════════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    const header = document.querySelector('header');
-    const hero = document.querySelector('.hero-section');
-
-    // --- 0. Header Scroll Transition (Transparent to Solid) ---
-    const updateHeader = () => {
+    
+    // ─── 1. Header Scroll Effect ───────────────────────────────────────
+    const header = document.getElementById('site-header');
+    window.addEventListener('scroll', () => {
         if (window.scrollY > 50) {
             header.setAttribute('data-header-state', 'scrolled');
         } else {
-            header.setAttribute('data-header-state', 'transparent');
+            header.removeAttribute('data-header-state');
         }
-    };
-    window.addEventListener('scroll', updateHeader);
-    updateHeader();
+    });
 
-    // --- Simple Range Slider Label Update (for visual feedback) ---
-    const moodSlider = document.getElementById('mood_level');
-    const moodValueSpan = document.getElementById('moodValue');
-    if (moodSlider) {
-        moodValueSpan.textContent = moodSlider.value;
-        moodSlider.addEventListener('input', () => {
-            moodValueSpan.textContent = moodSlider.value;
+    // ─── 2. Toast Notification System ──────────────────────────────────
+    const toast = document.getElementById('toast');
+    function showToast(msg) {
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        setTimeout(() => {
+            toast.classList.remove('visible');
+        }, 3500);
+    }
+
+    // ─── 3. Level-Up Hero Immersion (3D Mouse Tilt & Floating Particles)
+    const heroSection = document.getElementById('home');
+    const heroVisual = document.getElementById('heroVisual');
+    const heroParticles = document.getElementById('heroParticles');
+    const backdropText = document.querySelector('.hero-backdrop-text');
+
+    // Create ambient glowing particles in Hero
+    if (heroParticles) {
+        for (let i = 0; i < 16; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'hero-particle';
+            const size = Math.random() * 4 + 2;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 80 + 10}%`;
+            particle.style.animationDelay = `${Math.random() * 10}s`;
+            particle.style.animationDuration = `${Math.random() * 10 + 10}s`;
+            heroParticles.appendChild(particle);
+        }
+    }
+
+    // 3D Tilt Parallax Effect on Mouse Movement
+    if (heroSection && heroVisual) {
+        heroSection.addEventListener('mousemove', (e) => {
+            const rect = heroSection.getBoundingClientRect();
+            const x = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2);
+            const y = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2);
+
+            // Subtle 3D tilt on the Hero orb card stack
+            heroVisual.style.transform = `rotateY(${x * 12}deg) rotateX(${-y * 12}deg)`;
+            
+            if (backdropText) {
+                backdropText.style.transform = `translate(${x * -25}px, ${y * -15}px)`;
+            }
+        });
+
+        heroSection.addEventListener('mouseleave', () => {
+            heroVisual.style.transform = 'rotateY(0deg) rotateX(0deg)';
+            if (backdropText) backdropText.style.transform = 'translate(0, 0)';
         });
     }
 
-    // --- 1. Fade-in on Scroll Animation (Same as before) ---
-    const scrollObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('is-visible');
-            }
+    // ─── 4. Mood Range Label ───────────────────────────────────────────
+    const moodLevelInput = document.getElementById('mood_level');
+    const moodValLabel = document.getElementById('moodValLabel');
+    if (moodLevelInput && moodValLabel) {
+        moodLevelInput.addEventListener('input', () => {
+            moodValLabel.textContent = moodLevelInput.value;
+            fetchAISuggestions(activePeriod, moodLevelInput.value);
         });
-    }, { threshold: 0.1 });
+    }
 
-    document.querySelectorAll('.reveal-on-scroll').forEach(el => {
-        scrollObserver.observe(el);
+    // ─── 5. AI Suggestions Fetching ───────────────────────────────────
+    let activePeriod = 'evening';
+    const periodTabs = document.querySelectorAll('.period-tab');
+    const aiTitle = document.getElementById('aiTitle');
+    const aiMessage = document.getElementById('aiMessage');
+    const aiGrid = document.getElementById('aiActivitiesGrid');
+
+    async function fetchAISuggestions(period = 'evening', mood = 5) {
+        try {
+            const res = await fetch(`/api/ai-suggestions?period=${period}&mood_level=${mood}`);
+            if (!res.ok) throw new Error('API failed');
+            const data = await res.json();
+            
+            if (data.status === 'success' && data.suggestions) {
+                const sug = data.suggestions;
+                if (aiTitle) aiTitle.textContent = sug.title;
+                if (aiMessage) aiMessage.textContent = sug.message;
+                
+                if (aiGrid) {
+                    aiGrid.innerHTML = sug.activities.map(act => `
+                        <div class="feature-card glass-panel" style="padding: 1.5rem;">
+                            <div class="feature-icon" style="width: 44px; height: 44px; font-size: 1.4rem;">${act.icon}</div>
+                            <h3 style="font-size: 1.1rem; margin-top: 0.5rem;">${act.name}</h3>
+                            <div style="color: var(--accent-emerald); font-size: 0.8rem; font-weight: 600;">⏱️ ${act.duration}</div>
+                            <p style="font-size: 0.85rem; margin-top: 0.2rem;">🌱 ${act.benefit}</p>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch (err) {
+            console.warn('Backend fallback for AI suggestions:', err);
+        }
+    }
+
+    periodTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            periodTabs.forEach(t => {
+                t.classList.remove('active', 'btn-solid');
+                t.classList.add('btn-ghost');
+            });
+            tab.classList.remove('btn-ghost');
+            tab.classList.add('active', 'btn-solid');
+            activePeriod = tab.dataset.period;
+            fetchAISuggestions(activePeriod, moodLevelInput ? moodLevelInput.value : 5);
+        });
     });
 
+    fetchAISuggestions('evening', 5);
 
-    // --- 2. Active Nav Dot Scrolling (Same as before) ---
-    const sections = document.querySelectorAll('section[id]');
-    const navDots = document.querySelectorAll('.scroll-indicator .dot');
+    // ─── 6. 4-7-8 Breathing Exercise ───────────────────────────────────
+    const breathOrbWrap = document.getElementById('breathOrbWrap');
+    const breathPhase = document.getElementById('breathPhase');
+    const breathTimer = document.getElementById('breathTimer');
+    const startBreathBtn = document.getElementById('startBreathBtn');
+    const stopBreathBtn = document.getElementById('stopBreathBtn');
 
-    if (navDots.length > 0) {
-        const dotObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const id = entry.target.getAttribute('id');
-                    const activeDot = document.querySelector(`.scroll-indicator a[href="#${id}"]`);
-                    navDots.forEach(dot => dot.classList.remove('active'));
-                    if (activeDot) {
-                        activeDot.classList.add('active');
+    let breathInterval = null;
+    let phaseIndex = 0;
+    let timerValue = 0;
+
+    const phases = [
+        { label: 'Inhale deeply...', duration: 4, class: 'expanding' },
+        { label: 'Hold breath...', duration: 7, class: 'holding' },
+        { label: 'Exhale slowly...', duration: 8, class: 'contracting' }
+    ];
+
+    function runBreathingPhase() {
+        const current = phases[phaseIndex];
+        timerValue = current.duration;
+        
+        if (breathOrbWrap) breathOrbWrap.className = `breath-orb-wrap ${current.class}`;
+        if (breathPhase) breathPhase.textContent = current.label;
+        if (breathTimer) breathTimer.textContent = String(timerValue).padStart(2, '0');
+
+        breathInterval = setInterval(() => {
+            timerValue--;
+            if (breathTimer) breathTimer.textContent = String(timerValue).padStart(2, '0');
+
+            if (timerValue <= 0) {
+                clearInterval(breathInterval);
+                phaseIndex = (phaseIndex + 1) % phases.length;
+                runBreathingPhase();
+            }
+        }, 1000);
+    }
+
+    if (startBreathBtn) {
+        startBreathBtn.addEventListener('click', () => {
+            startBreathBtn.style.display = 'none';
+            if (stopBreathBtn) stopBreathBtn.style.display = 'inline-flex';
+            phaseIndex = 0;
+            runBreathingPhase();
+        });
+    }
+
+    if (stopBreathBtn) {
+        stopBreathBtn.addEventListener('click', () => {
+            clearInterval(breathInterval);
+            if (breathOrbWrap) breathOrbWrap.className = 'breath-orb-wrap';
+            if (breathPhase) breathPhase.textContent = 'Press Start to Begin';
+            if (breathTimer) breathTimer.textContent = '04';
+            stopBreathBtn.style.display = 'none';
+            if (startBreathBtn) startBreathBtn.style.display = 'inline-flex';
+        });
+    }
+
+    // ─── 7. LocalStorage Data Persistence & Chart ─────────────────────
+    const scoreProgress = document.getElementById('scoreProgress');
+    const scoreVal = document.getElementById('scoreVal');
+    const scoreStatus = document.getElementById('scoreStatus');
+    let chartInstance = null;
+
+    function getHistory() {
+        const stored = localStorage.getItem('ayurveda_history');
+        if (stored) {
+            try { return JSON.parse(stored); } catch (e) {}
+        }
+        return [
+            { day: 'Mon', score: 68, mood: 6, sleep: 6.5 },
+            { day: 'Tue', score: 74, mood: 7, sleep: 7.0 },
+            { day: 'Wed', score: 80, mood: 8, sleep: 7.5 },
+            { day: 'Thu', score: 78, mood: 7, sleep: 7.0 },
+            { day: 'Fri', score: 85, mood: 9, sleep: 8.0 },
+            { day: 'Sat', score: 82, mood: 8, sleep: 7.5 },
+            { day: 'Today', score: 88, mood: 9, sleep: 8.5 }
+        ];
+    }
+
+    function saveHistory(history) {
+        localStorage.setItem('ayurveda_history', JSON.stringify(history));
+    }
+
+    function setScoreUI(score) {
+        const clamped = Math.min(100, Math.max(0, score));
+        if (scoreVal) scoreVal.textContent = clamped;
+        
+        if (scoreProgress) {
+            const offset = 377 - (377 * clamped / 100);
+            scoreProgress.style.strokeDashoffset = offset;
+        }
+
+        if (scoreStatus) {
+            if (clamped >= 80) scoreStatus.textContent = "Your aura is radiant and in full harmony today! ✨";
+            else if (clamped >= 60) scoreStatus.textContent = "Your aura is steady and balanced. 🌿";
+            else scoreStatus.textContent = "Your aura needs rest. Focus on Soma Zone practices. 🌙";
+        }
+    }
+
+    function updateChart(historyData) {
+        const ctx = document.getElementById('wellnessChart');
+        if (!ctx) return;
+
+        const labels = historyData.map(item => item.day);
+        const scores = historyData.map(item => item.score);
+
+        if (chartInstance) {
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = scores;
+            chartInstance.update();
+        } else {
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Wellness Index',
+                        data: scores,
+                        borderColor: '#00f5d4',
+                        backgroundColor: 'rgba(0, 245, 212, 0.12)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#00f5d4'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#b8a7ea' },
+                            grid: { color: 'rgba(184, 167, 234, 0.08)' }
+                        },
+                        y: {
+                            ticks: { color: '#b8a7ea' },
+                            grid: { color: 'rgba(184, 167, 234, 0.08)' },
+                            min: 40,
+                            max: 100
+                        }
                     }
                 }
             });
-        }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
-
-        sections.forEach(section => { dotObserver.observe(section); });
+        }
     }
 
-    // --- 3. Wellness Journal Submission (Same as before) ---
-    // This is the updated section for the journal submission in script.js
-    const journalForm = document.getElementById('healthJournalForm');
-    if (journalForm) {
-        journalForm.addEventListener('submit', async (e) => {
+    const history = getHistory();
+    const latestScore = history[history.length - 1].score;
+    setScoreUI(latestScore);
+    updateChart(history);
+
+    // ─── 8. Form Submission Handler ───────────────────────────────────
+    const wellnessForm = document.getElementById('wellnessForm');
+    if (wellnessForm) {
+        wellnessForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            
+            const mood = parseInt(document.getElementById('mood_level').value) || 5;
+            const sleep = parseFloat(document.getElementById('sleep_hours').value) || 7.5;
+            const water = parseFloat(document.getElementById('water_intake').value) || 2.5;
+            const exercise = parseInt(document.getElementById('exercise_time').value) || 30;
 
-            const userId = 'temp_user_hackathon'; // Hardcoded user ID
+            const calculatedScore = Math.min(100, Math.round(
+                (mood * 4) + 
+                (Math.min(sleep, 8) / 8 * 30) + 
+                (Math.min(water, 3) / 3 * 15) + 
+                (Math.min(exercise, 60) / 60 * 15)
+            ));
 
-            // 1. Capture all form data
-            const moodLevel = parseInt(document.getElementById('mood_level').value);
-            const sleepHours = parseFloat(document.getElementById('sleep_hours').value);
-            const waterIntake = parseFloat(document.getElementById('water_intake').value);
-            const exerciseTime = parseInt(document.getElementById('exercise_time').value);
-            const screenTime = parseFloat(document.getElementById('screen_time').value);
-            const notes = document.getElementById('notes').value;
-
-            // 2. Store non-mood data (Sleep, Water, Exercise, Screen) in localStorage
-            const nonMoodData = {
-                sleep_hours: sleepHours,
-                water_intake: waterIntake,
-                exercise_time: exerciseTime,
-                screen_time: screenTime,
-                notes: notes,
-                timestamp: new Date().toISOString()
+            const currentHistory = getHistory();
+            currentHistory[currentHistory.length - 1] = {
+                day: 'Today',
+                score: calculatedScore,
+                mood: mood,
+                sleep: sleep
             };
-            localStorage.setItem(`daily_metrics_${userId}_${new Date().toDateString()}`, JSON.stringify(nonMoodData));
-            console.log('Non-mood data saved to localStorage:', nonMoodData);
+            saveHistory(currentHistory);
 
-            // 3. Send Mood data to MongoDB via API (existing /api/mood route)
-            const moodData = {
-                user_id: userId,
-                mood_level: moodLevel * 10, // Scale 1-10 to 10-100 for better display context
-                emotional: moodLevel,
-                mental: moodLevel,
-                physical: moodLevel,
-                notes: `Mood Log: ${notes}`,
-            };
+            setScoreUI(calculatedScore);
+            updateChart(currentHistory);
 
-            try {
-                const moodResponse = await fetch('/api/mood', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(moodData)
-                });
-
-                if (!moodResponse.ok) throw new Error('Failed to log mood.');
-
-                const result = await moodResponse.json();
-                console.log('Mood logged to MongoDB:', result);
-
-                // 4. Calculate and send a simplified Wellness Score (for session-clearing MongoDB route)
-                const wellnessScore = Math.round((moodLevel / 10) * 40 + (sleepHours / 8) * 30 + (waterIntake / 2) * 10 + (exerciseTime / 60) * 20);
-
-                const scoreData = {
-                    user_id: userId,
-                    score: Math.min(100, wellnessScore),
-                    timestamp: new Date().toISOString()
-                };
-
-                // This new endpoint will be implemented to temporarily store the score in MongoDB
-                await fetch('/api/wellness-session-log', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(scoreData)
-                });
-
-                // 5. Success Feedback and Reset
-                alert(`Log Successful! Wellness Score: ${scoreData.score}/100. Data sent to API/saved locally.`);
-                journalForm.reset();
-                moodValueSpan.textContent = '5'; // Reset slider label
-
-            } catch (error) {
-                console.error('Failed to send entry:', error);
-                alert('Error connecting to the server. Check console for details.');
-            }
+            showToast(`✨ Wellness Logged! Aura Score: ${calculatedScore}/100`);
         });
     }
-
-
-    // --- 4. Hero Mouse-Move Parallax (Same as before) ---
-    const parallaxElements = document.querySelectorAll('[data-parallax]');
-
-    if (hero) {
-        hero.addEventListener('mousemove', (e) => {
-            const x = (e.clientX - window.innerWidth / 2) / window.innerWidth;
-            const y = (e.clientY - window.innerHeight / 2) / window.innerHeight;
-            parallaxElements.forEach(el => {
-                const strength = el.dataset.parallaxStrength || 20;
-                el.style.transform = `translate(${x * strength}px, ${y * strength}px)`;
-            });
-        });
-    }
-
-    // --- 5. 3D Card Tilt (Same as before) ---
-    document.querySelectorAll('.tilt-card').forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
-            const rotateX = (y / (rect.height / 2)) * -5;
-            const rotateY = (x / (rect.width / 2)) * 10;
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-        });
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
-        });
-    });
-
-    // --- 6. Click Ripple Effect (Same as before) ---
-    document.addEventListener('click', (e) => {
-        const ripple = document.createElement('span');
-        ripple.classList.add('click-ripple');
-        ripple.style.left = e.clientX + 'px';
-        ripple.style.top = e.clientY + 'px';
-        ripple.style.marginLeft = '-25px';
-        ripple.style.marginTop = '-25px';
-        document.body.appendChild(ripple);
-        setTimeout(() => {
-            ripple.remove();
-        }, 600);
-    });
-
-    // --- 7. Interactive Dot Field (Same as before) ---
-    const dotField = document.getElementById('interactive-dot-field');
-    if (dotField) {
-        const numDots = 150;
-        const dots = [];
-
-        for (let i = 0; i < numDots; i++) {
-            const dot = document.createElement('div');
-            dot.classList.add('dot-particle');
-            dot.style.left = `${Math.random() * 100}%`;
-            dot.style.top = `${Math.random() * 100}%`;
-            dotField.appendChild(dot);
-            dots.push(dot);
-        }
-
-        hero.addEventListener('mousemove', (e) => {
-            const heroRect = hero.getBoundingClientRect();
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-
-            dots.forEach(dot => {
-                const dotRect = dot.getBoundingClientRect();
-                const dotX = dotRect.left + dotRect.width / 2;
-                const dotY = dotRect.top + dotRect.height / 2;
-
-                const dx = mouseX - dotX;
-                const dy = mouseY - dotY;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                const maxDistance = 150;
-                if (distance < maxDistance) {
-                    const repulsion = (1 - (distance / maxDistance)) * 10;
-
-                    const newX = dotX - (dx / distance) * repulsion - heroRect.left;
-                    const newY = dotY - (dy / distance) * repulsion - heroRect.top;
-
-                    dot.style.transition = 'transform 0.5s ease-out';
-                    dot.style.transform = `translate(${newX}px, ${newY}px)`;
-                    dot.style.backgroundColor = `var(--accent-primary)`;
-                } else {
-                    dot.style.transition = 'transform 2s ease-out, background-color 0.5s ease';
-                    dot.style.backgroundColor = `var(--accent-secondary)`;
-                }
-            });
-        });
-
-        hero.addEventListener('mouseleave', () => {
-            dots.forEach(dot => {
-                dot.style.transition = 'transform 1s ease-out, background-color 0.5s ease';
-                dot.style.transform = 'translate(0, 0)';
-                dot.style.backgroundColor = `var(--accent-secondary)`;
-            });
-        });
-    }
-
-    // --- NEW: 8. Interactive Planet Generation (Cosmic Elements) ---
-    const planetContainer = document.getElementById('planet-container');
-    const colors = ['#A998FF', '#70D6FF', '#E0F7FA']; // Lavender, Cyan, Light
-    const numPlanets = 10;
-
-    const generatePlanets = () => {
-        for (let i = 0; i < numPlanets; i++) {
-            const planet = document.createElement('div');
-            planet.classList.add('planet-element');
-
-            const size = Math.random() * 8 + 4; // Size between 4px and 12px
-            planet.style.width = `${size}px`;
-            planet.style.height = `${size}px`;
-
-            planet.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            planet.style.opacity = Math.random() * 0.6 + 0.2;
-
-            // Initial position (randomized across the screen)
-            planet.style.left = `${Math.random() * 100}%`;
-            planet.style.top = `${Math.random() * 100}%`;
-
-            // Set animation properties
-            planet.style.animationName = 'float-planet';
-            planet.style.animationDuration = `${Math.random() * 40 + 20}s`; // 20s to 60s
-            planet.style.animationTimingFunction = 'ease-in-out';
-            planet.style.animationIterationCount = 'infinite';
-            planet.style.animationDirection = 'alternate';
-
-            // Set transform origin for slight rotation effect
-            planet.style.transformOrigin = `${Math.random() * 100}% ${Math.random() * 100}%`;
-
-            planetContainer.appendChild(planet);
-        }
-    };
-
-    if (planetContainer) {
-        generatePlanets();
-
-        // Add animation keyframes dynamically
-        const styleSheet = document.createElement('style');
-        styleSheet.type = 'text/css';
-        styleSheet.innerText = `
-            @keyframes float-planet {
-                0% { transform: translate(0, 0) rotate(0deg); }
-                100% { transform: translate(${Math.random() * 100 - 50}px, ${Math.random() * 100 - 50}px) rotate(360deg); }
-            }
-        `;
-        document.head.appendChild(styleSheet);
-    }
-
-
 });
